@@ -3,7 +3,7 @@ package kv
 import (
 	"testing"
 
-	"github.com/inner-daydream/kvz/repositories/sqlite"
+	"github.com/inner-daydream/kvz/internal/sqlite"
 	_ "github.com/mattn/go-sqlite3"
 )
 

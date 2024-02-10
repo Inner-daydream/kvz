@@ -1,4 +1,4 @@
-.PHONY: sqlc
+.PHONY: sqlgen
 
 sqlgen:
-	cd repositories/sqlite/sql && sqlc generate
+	cd internal/sqlite/sql && sqlc generate

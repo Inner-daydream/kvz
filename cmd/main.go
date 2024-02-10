@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/inner-daydream/kvz/kv"
-	"github.com/inner-daydream/kvz/repositories/sqlite"
+	"github.com/inner-daydream/kvz/internal/kv"
+	"github.com/inner-daydream/kvz/internal/sqlite"
 	_ "github.com/mattn/go-sqlite3"
 )
 
