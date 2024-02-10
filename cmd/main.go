@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	db, err := sqlite.CreateDB("kv.db")
+	db, err := sqlite.OpenDB("kv.db")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -12,10 +12,10 @@ import (
 //go:embed sql/migrations/*.sql
 var embedMigrations embed.FS
 
-func CreateDB(path string) (*sql.DB, error) {
+func OpenDB(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create the database: %w", err)
+		return nil, fmt.Errorf("failed to open the database: %w", err)
 	}
 	return db, nil
 }

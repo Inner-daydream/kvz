@@ -51,7 +51,7 @@ func Test_kvService_Set(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	db, err := sqlite.CreateDB(":memory:")
+	db, err := sqlite.OpenDB(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func Test_kvService_Set(t *testing.T) {
 }
 
 func Test_kvService_Get(t *testing.T) {
-	db, err := sqlite.CreateDB(":memory:")
+	db, err := sqlite.OpenDB(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
