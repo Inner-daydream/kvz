@@ -20,14 +20,22 @@ func OpenDB(path string) (*sql.DB, error) {
 	return db, nil
 }
 
+// update the db to the latest sql schema
 func Migrate(db *sql.DB) error {
 	goose.SetLogger(goose.NopLogger())
 	goose.SetDialect("sqlite3")
 	goose.SetBaseFS(embedMigrations)
-
 	if err := goose.Up(db, "sql/migrations"); err != nil {
 		return fmt.Errorf("migrations failed: %w", err)
 	}
-
 	return nil
 }
+
+// func isOutdated(db *sql.DB, lastKnownVersion int64) (bool, error) {
+// 	currentVersion, err := goose.GetDBVersion(db)
+// 	if err != nil {
+// 		return false, fmt.Errorf("unable to fetch db version: %w", err)
+// 	}
+// 	isOutdated := lastKnownVersion < currentVersion
+// 	return isOutdated, nil
+// }
