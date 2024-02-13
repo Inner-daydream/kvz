@@ -7,4 +7,4 @@ sql:
       go:
         package: "sqlite"
         out: "../"
-        query_parameter_limit: 4
+        emit_interface: true
