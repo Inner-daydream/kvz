@@ -3,7 +3,7 @@ BINARY_NAME :=kvz
 
 .PHONY: sqlgen
 sqlgen:
-	cd internal/sqlite/sql && sqlc gener
+	cd internal/sqlite/sql && sqlc generate
 
 build:
 	go build -o ${BINARY_NAME} ${MAIN_PACKAGE_PATH}/main.go
@@ -13,5 +13,4 @@ test:
 
 clean:
 	go clean
-	rm ${BINARY_NAME}
-	rm kv.db
+	rm ${BINARY_NAME}; rm kv.db;
