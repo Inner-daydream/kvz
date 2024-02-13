@@ -6,6 +6,16 @@ package sqlite
 
 import ()
 
+type Hook struct {
+	Name   string
+	Script string
+}
+
+type KeyHook struct {
+	Key  string
+	Hook string
+}
+
 type Kv struct {
 	Key string
 	Val string

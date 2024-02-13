@@ -9,29 +9,175 @@ import (
 	"context"
 )
 
-const getVal = `-- name: GetVal :one
-SELECT
-    val
-FROM
-    kv
-WHERE
-    key = ?
+const addHook = `-- name: addHook :exec
+INSERT INTO hooks ("name", script)
+VALUES
+    (?, ?)
 `
 
-func (q *Queries) GetVal(ctx context.Context, key string) (string, error) {
+type addHookParams struct {
+	Name   string
+	Script string
+}
+
+func (q *Queries) addHook(ctx context.Context, arg addHookParams) error {
+	_, err := q.db.ExecContext(ctx, addHook, arg.Name, arg.Script)
+	return err
+}
+
+const attachHook = `-- name: attachHook :exec
+INSERT INTO key_hooks ("key", hook)
+VALUES (?, ?)
+`
+
+type attachHookParams struct {
+	Key  string
+	Hook string
+}
+
+func (q *Queries) attachHook(ctx context.Context, arg attachHookParams) error {
+	_, err := q.db.ExecContext(ctx, attachHook, arg.Key, arg.Hook)
+	return err
+}
+
+const getAttachedHooks = `-- name: getAttachedHooks :many
+SELECT h.name, h.script
+FROM key_hooks kh
+JOIN hooks h ON kh.hook = h.name
+WHERE kh.key = ?
+`
+
+func (q *Queries) getAttachedHooks(ctx context.Context, key string) ([]Hook, error) {
+	rows, err := q.db.QueryContext(ctx, getAttachedHooks, key)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Hook
+	for rows.Next() {
+		var i Hook
+		if err := rows.Scan(&i.Name, &i.Script); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getVal = `-- name: getVal :one
+SELECT val
+FROM kv
+WHERE "key" = ?
+`
+
+func (q *Queries) getVal(ctx context.Context, key string) (string, error) {
 	row := q.db.QueryRowContext(ctx, getVal, key)
 	var val string
 	err := row.Scan(&val)
 	return val, err
 }
 
-const setVal = `-- name: SetVal :exec
-INSERT OR REPLACE INTO kv (key, val)
-VALUES
-    (?, ?)
+const hookExists = `-- name: hookExists :one
+SELECT EXISTS(
+    SELECT 1
+    FROM hooks
+    WHERE "name"=?
+)
 `
 
-func (q *Queries) SetVal(ctx context.Context, key string, val string) error {
-	_, err := q.db.ExecContext(ctx, setVal, key, val)
+func (q *Queries) hookExists(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, hookExists, name)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const keyExists = `-- name: keyExists :one
+SELECT EXISTS(
+    SELECT 1 
+    FROM kv 
+    WHERE "key"=?
+)
+`
+
+func (q *Queries) keyExists(ctx context.Context, key string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, keyExists, key)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const listHooks = `-- name: listHooks :many
+SELECT "name" FROM hooks
+`
+
+func (q *Queries) listHooks(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listHooks)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		items = append(items, name)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKeys = `-- name: listKeys :many
+SELECT "key" FROM kv
+`
+
+func (q *Queries) listKeys(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listKeys)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
+		}
+		items = append(items, key)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setVal = `-- name: setVal :exec
+INSERT OR REPLACE INTO kv ("key", val)
+VALUES (?, ?)
+`
+
+type setValParams struct {
+	Key string
+	Val string
+}
+
+func (q *Queries) setVal(ctx context.Context, arg setValParams) error {
+	_, err := q.db.ExecContext(ctx, setVal, arg.Key, arg.Val)
 	return err
 }
