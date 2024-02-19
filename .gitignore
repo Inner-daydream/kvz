@@ -1,3 +1,4 @@
 *.db
 kvz
 .DS_Store
+.vscode
