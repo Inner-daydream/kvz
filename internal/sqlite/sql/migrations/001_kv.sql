@@ -1,20 +1,22 @@
 -- +goose Up
 CREATE TABLE kv
 (
-    "key" text PRIMARY KEY,
-    val text NOT NULL
+    "key" TEXT PRIMARY KEY,
+    val TEXT NOT NULL
 );
 
 CREATE TABLE hooks
 (
-    name text PRIMARY KEY,
-    script text NOT NULL
+    name TEXT PRIMARY KEY,
+    script TEXT,
+    is_file BOOLEAN DEFAULT FALSE NOT NULL,
+    filepath TEXT
 );
 
 CREATE TABLE key_hooks
 (
-    "key" text NOT NULL,
-    hook text NOT NULL,
+    "key" TEXT NOT NULL,
+    hook TEXT NOT NULL,
     FOREIGN KEY ("key") REFERENCES kv ("key"),
     FOREIGN KEY (hook) REFERENCES hooks ("name")
 );

@@ -10,17 +10,26 @@ VALUES (?, ?);
 -- name: listKeys :many
 SELECT "key" FROM kv;
 
--- name: addHook :exec
-INSERT INTO hooks ("name", script)
-VALUES
-    (?, ?);
+-- name: addScriptHook :exec
+INSERT INTO hooks (name, script, is_file)
+VALUES (?, ?, FALSE);
+
+-- name: addFilePathHook :exec 
+INSERT INTO hooks (name, filepath, is_file)
+VALUES (?, ?, TRUE);
+
+-- name: addFileHook :exec
+INSERT INTO hooks (name, script, is_file)
+VALUES (?, ?, TRUE);
 
 -- name: attachHook :exec
 INSERT INTO key_hooks ("key", hook)
 VALUES (?, ?);
 
+
+
 -- name: listHooks :many
-SELECT "name" FROM hooks;
+SELECT name FROM hooks;
 
 -- name: keyExists :one
 SELECT EXISTS(
@@ -33,11 +42,11 @@ SELECT EXISTS(
 SELECT EXISTS(
     SELECT 1
     FROM hooks
-    WHERE "name"=?
+    WHERE name=?
 );
 
 -- name: getAttachedHooks :many
-SELECT h.name, h.script
+SELECT h.name, h.script, h.is_file, h.filepath
 FROM key_hooks kh
 JOIN hooks h ON kh.hook = h.name
 WHERE kh.key = ?;

@@ -11,17 +11,21 @@ import (
 type KvService interface {
 	Set(key string, val string) (err error)
 	Get(key string) (val string, err error)
-	AddHook(name string, script string) (err error)
 	AttachHook(key string, hook string) error
 	ListKeys() ([]string, error)
 	ListHooks() ([]string, error)
 	GetAttachedHooks(key string) ([]Hook, error)
-	ExecHooks(hooks []Hook, newVal string) []CmdOutput
+	AddFilePathHook(name string, filepath string) error
+	AddFileHook(name string, content string) error
+	AddScriptHook(key string, hook string) error
+	ExecHooks(hooks []Hook, newVal string) ([]CmdOutput, error)
 }
 type KvRepository interface {
 	GetVal(ctx context.Context, key string) (val string, err error)
 	SetVal(ctx context.Context, key string, val string) error
-	AddHook(ctx context.Context, name string, script string) error
+	AddScriptHook(ctx context.Context, name string, script string) error
+	AddFilePathHook(ctx context.Context, name string, filepath string) error
+	AddFileHook(ctx context.Context, name string, content string) error
 	AttachHook(ctx context.Context, key string, hook string) error
 	ListKeys(ctx context.Context) ([]string, error)
 	ListHooks(ctx context.Context) ([]string, error)
@@ -31,8 +35,11 @@ type KvRepository interface {
 }
 
 type Hook struct {
-	Name   string
-	Script string
+	Name        string
+	Script      string
+	IsFile      bool
+	IsLocalFile bool
+	Filepath    string
 }
 
 type kvService struct {
@@ -63,14 +70,47 @@ func (s *kvService) Get(key string) (val string, err error) {
 	return val, nil
 }
 
-func (s *kvService) AddHook(name string, script string) error {
-	ctx := context.Background()
+func (s *kvService) AddScriptHook(name string, script string) error {
 	if name == "" || script == "" {
 		return fmt.Errorf("key or hook name may not be empty")
 	}
-	err := s.r.AddHook(ctx, name, script)
+	ctx := context.Background()
+	hookExists, err := s.r.HookExists(ctx, name)
+	if err != nil {
+		return fmt.Errorf("could not check if the hook name is unique: %w", err)
+	}
+	if hookExists {
+		return fmt.Errorf("hook name has to be unique")
+	}
+
+	ctx = context.Background()
+	err = s.r.AddScriptHook(ctx, name, script)
 	if err != nil {
 		return fmt.Errorf("failed to create the hook: %w", err)
+	}
+	return nil
+}
+
+func (s *kvService) AddFileHook(name string, content string) error {
+	if name == "" || content == "" {
+		return fmt.Errorf("name or content may not be empty")
+	}
+	ctx := context.Background()
+	err := s.r.AddFileHook(ctx, name, content)
+	if err != nil {
+		return fmt.Errorf("unable to save the content of the file: %w", err)
+	}
+	return nil
+}
+
+func (s *kvService) AddFilePathHook(name string, filepath string) error {
+	if name == "" || filepath == "" {
+		return fmt.Errorf("name or filepath may not be empty")
+	}
+	ctx := context.Background()
+	err := s.r.AddFilePathHook(ctx, name, filepath)
+	if err != nil {
+		return fmt.Errorf("unable to create the hook: %w", err)
 	}
 	return nil
 }
@@ -147,18 +187,44 @@ type CmdOutput struct {
 	Caller string
 }
 
-func (s *kvService) ExecHooks(hooks []Hook, newVal string) []CmdOutput {
+func (s *kvService) ExecHooks(hooks []Hook, newVal string) ([]CmdOutput, error) {
 	if len(hooks) == 0 {
-		return nil
+		return nil, fmt.Errorf("no hooks were provided")
 	}
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/sh"
 	}
 	cmdOutputs := make([]CmdOutput, len(hooks))
-	var stdout, stderr bytes.Buffer
 	for i, hook := range hooks {
-		cmd := exec.Command(shell, "-c", hook.Script)
+		var cmd *exec.Cmd
+		var stdout, stderr bytes.Buffer
+		if hook.IsFile {
+			if hook.IsLocalFile {
+				cmd = exec.Command(hook.Filepath, newVal)
+			} else {
+				file, err := os.CreateTemp(os.TempDir(), "kvz-hook")
+				if err != nil {
+					return nil, fmt.Errorf("unable to create temporary hook script: %w", err)
+				}
+				filePath := file.Name()
+				defer os.Remove(filePath)
+				err = os.Chmod(filePath, 0700)
+				if err != nil {
+					return nil, fmt.Errorf("could not set permissions on temporary hook script: %w", err)
+				}
+				file.WriteString(hook.Script)
+				err = file.Close()
+				if err != nil {
+					return nil, fmt.Errorf("could not close the temporary hook script file after writing to it: %w", err)
+				}
+				cmd = exec.Command(file.Name(), newVal)
+			}
+
+		} else {
+			cmd = exec.Command(shell, "-c", hook.Script)
+		}
+
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		cmd.Env = append(cmd.Env, fmt.Sprintf("NEW_VAL=%s", newVal))
@@ -170,7 +236,7 @@ func (s *kvService) ExecHooks(hooks []Hook, newVal string) []CmdOutput {
 			Caller: hook.Name,
 		}
 	}
-	return cmdOutputs
+	return cmdOutputs, nil
 }
 
 func NewServcice(r KvRepository) KvService {

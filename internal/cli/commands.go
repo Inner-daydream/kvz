@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/alecthomas/kong"
 	"github.com/inner-daydream/kvz/internal/kv"
@@ -15,7 +18,7 @@ type SetCmd struct {
 	*BaseKvCmd
 	Key       string `arg:""`
 	Value     string `arg:""`
-	ShowHooks bool   `help:"Show the output of the hooks that ran. On success display stdout, on error display stderr."`
+	ShowHooks bool   `help:"Show the stdout of the hooks that ran."`
 	Verbose   bool   `help:"Display additional informations about the hooks that ran (status, name)"`
 }
 
@@ -28,6 +31,8 @@ type AddHookCmd struct {
 	*BaseKvCmd
 	Name   string `arg:""`
 	Script string `arg:""`
+	File   bool   `help:"Takes in a file as a script. it will be saved in the store and changes to the file won't be picked up automatically"`
+	Link   bool   `help:"Takes in a path to a a file, the path will be called on update"`
 }
 
 type AttachHookCmd struct {
@@ -72,11 +77,11 @@ func (c *SetCmd) Run() error {
 	if len(hooks) == 0 {
 		return nil
 	}
-	cmds := c.s.ExecHooks(hooks, c.Value)
-	if len(cmds) == 0 {
-		return nil
+	cmds, err := c.s.ExecHooks(hooks, c.Value)
+	if err != nil {
+		return err
 	}
-	if !c.ShowHooks {
+	if len(cmds) == 0 {
 		return nil
 	}
 
@@ -85,14 +90,14 @@ func (c *SetCmd) Run() error {
 			if cmd.Error != nil {
 				fmt.Printf("Hook %s execution failed: %s\n the following error occurred: %s\n", cmd.Caller, cmd.Error, cmd.Stderr)
 			} else {
-				fmt.Printf("Hook %s completed has ran successfuly.\nResult:\n%s", cmd.Caller, cmd.Stdout)
+				fmt.Printf("Hook %s success.\nResult:\n%s", cmd.Caller, cmd.Stdout)
 			}
-		} else {
-			if cmd.Error != nil {
-				fmt.Printf("%s\n%s", cmd.Error, cmd.Stderr)
-			} else {
-				fmt.Printf(cmd.Stdout)
-			}
+		}
+		if cmd.Error != nil {
+			fmt.Printf("%s\n%s", cmd.Error, cmd.Stderr)
+		}
+		if c.ShowHooks {
+			fmt.Printf(cmd.Stdout)
 		}
 
 	}
@@ -109,7 +114,25 @@ func (c *GetCmd) Run() error {
 }
 
 func (c *AddHookCmd) Run() error {
-	return c.s.AddHook(c.Name, c.Script)
+	if !c.File && !c.Link {
+		return c.s.AddScriptHook(c.Name, c.Script)
+	}
+	_, err := os.Stat(c.Script)
+	if errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("the specified file does not exist")
+	}
+	filePath, err := filepath.Abs(c.Script)
+	if err != nil {
+		return fmt.Errorf("could not determine full path of the script")
+	}
+	if c.Link {
+		return c.s.AddFilePathHook(c.Name, filePath)
+	}
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("could not read the script: %w", err)
+	}
+	return c.s.AddFileHook(c.Name, string(content))
 }
 
 func (c *AttachHookCmd) Run() error {

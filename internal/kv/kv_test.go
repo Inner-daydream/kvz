@@ -211,7 +211,7 @@ func Test_kvService_ListHooks(t *testing.T) {
 	service := kv.NewServcice(repo)
 	hookNames := []string{"h1", "h2", "h3"}
 	for _, hookName := range hookNames {
-		err := service.AddHook(hookName, "echo hello")
+		err := service.AddScriptHook(hookName, "echo hello")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -264,7 +264,7 @@ func Test_kvService_AttachHook(t *testing.T) {
 		t.Fatal(err)
 	}
 	testHook := "h1"
-	err = service.AddHook(testHook, "echo test")
+	err = service.AddScriptHook(testHook, "echo test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -340,7 +340,7 @@ func Test_kvService_GetAttachedHooks(t *testing.T) {
 	testkey := keys[0]
 	wantedHooks := make([]kv.Hook, 3)
 	for i, hookName := range hookNames {
-		err := service.AddHook(hookName, hookContent)
+		err := service.AddScriptHook(hookName, hookContent)
 		if err != nil {
 			t.Fatal(err)
 		}

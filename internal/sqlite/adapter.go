@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/inner-daydream/kvz/internal/kv"
 )
@@ -10,12 +11,39 @@ type KvRepositoryAdapter struct {
 	q Querier
 }
 
-func (r *KvRepositoryAdapter) AddHook(ctx context.Context, name string, script string) error {
-	params := addHookParams{
-		Name:   name,
-		Script: script,
+// AddFileHook implements kv.KvRepository.
+func (r *KvRepositoryAdapter) AddFileHook(ctx context.Context, name string, content string) error {
+	params := addFileHookParams{
+		Name: name,
+		Script: sql.NullString{
+			Valid:  true,
+			String: content,
+		},
 	}
-	return r.q.addHook(ctx, params)
+	return r.q.addFileHook(ctx, params)
+}
+
+// AddFilePathHook implements kv.KvRepository.
+func (r *KvRepositoryAdapter) AddFilePathHook(ctx context.Context, name string, filepath string) error {
+	params := addFilePathHookParams{
+		Name: name,
+		Filepath: sql.NullString{
+			Valid:  true,
+			String: filepath,
+		},
+	}
+	return r.q.addFilePathHook(ctx, params)
+}
+
+func (r *KvRepositoryAdapter) AddScriptHook(ctx context.Context, name string, script string) error {
+	params := addScriptHookParams{
+		Name: name,
+		Script: sql.NullString{
+			Valid:  true,
+			String: script,
+		},
+	}
+	return r.q.addScriptHook(ctx, params)
 }
 
 func (r *KvRepositoryAdapter) AttachHook(ctx context.Context, key string, hook string) error {
@@ -59,9 +87,16 @@ func (r *KvRepositoryAdapter) GetAttachedHooks(ctx context.Context, key string) 
 	}
 	kvHooks := make([]kv.Hook, len(sqliteHooks))
 	for i, sqliteHook := range sqliteHooks {
+		script := ""
+		if sqliteHook.Script.Valid {
+			script = sqliteHook.Script.String
+		}
 		kvHooks[i] = kv.Hook{
-			Script: sqliteHook.Script,
-			Name:   sqliteHook.Name,
+			Script:      script,
+			Name:        sqliteHook.Name,
+			IsFile:      sqliteHook.IsFile,
+			IsLocalFile: sqliteHook.Filepath.Valid,
+			Filepath:    sqliteHook.Filepath.String,
 		}
 	}
 	return kvHooks, nil

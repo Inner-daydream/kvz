@@ -4,11 +4,15 @@
 
 package sqlite
 
-import ()
+import (
+	"database/sql"
+)
 
 type Hook struct {
-	Name   string
-	Script string
+	Name     string
+	Script   sql.NullString
+	IsFile   bool
+	Filepath sql.NullString
 }
 
 type KeyHook struct {

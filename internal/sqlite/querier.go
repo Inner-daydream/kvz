@@ -9,7 +9,9 @@ import (
 )
 
 type Querier interface {
-	addHook(ctx context.Context, arg addHookParams) error
+	addFileHook(ctx context.Context, arg addFileHookParams) error
+	addFilePathHook(ctx context.Context, arg addFilePathHookParams) error
+	addScriptHook(ctx context.Context, arg addScriptHookParams) error
 	attachHook(ctx context.Context, arg attachHookParams) error
 	getAttachedHooks(ctx context.Context, key string) ([]Hook, error)
 	getVal(ctx context.Context, key string) (string, error)

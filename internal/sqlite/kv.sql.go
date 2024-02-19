@@ -7,21 +7,51 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 )
 
-const addHook = `-- name: addHook :exec
-INSERT INTO hooks ("name", script)
-VALUES
-    (?, ?)
+const addFileHook = `-- name: addFileHook :exec
+INSERT INTO hooks (name, script, is_file)
+VALUES (?, ?, TRUE)
 `
 
-type addHookParams struct {
+type addFileHookParams struct {
 	Name   string
-	Script string
+	Script sql.NullString
 }
 
-func (q *Queries) addHook(ctx context.Context, arg addHookParams) error {
-	_, err := q.db.ExecContext(ctx, addHook, arg.Name, arg.Script)
+func (q *Queries) addFileHook(ctx context.Context, arg addFileHookParams) error {
+	_, err := q.db.ExecContext(ctx, addFileHook, arg.Name, arg.Script)
+	return err
+}
+
+const addFilePathHook = `-- name: addFilePathHook :exec
+INSERT INTO hooks (name, filepath, is_file)
+VALUES (?, ?, TRUE)
+`
+
+type addFilePathHookParams struct {
+	Name     string
+	Filepath sql.NullString
+}
+
+func (q *Queries) addFilePathHook(ctx context.Context, arg addFilePathHookParams) error {
+	_, err := q.db.ExecContext(ctx, addFilePathHook, arg.Name, arg.Filepath)
+	return err
+}
+
+const addScriptHook = `-- name: addScriptHook :exec
+INSERT INTO hooks (name, script, is_file)
+VALUES (?, ?, FALSE)
+`
+
+type addScriptHookParams struct {
+	Name   string
+	Script sql.NullString
+}
+
+func (q *Queries) addScriptHook(ctx context.Context, arg addScriptHookParams) error {
+	_, err := q.db.ExecContext(ctx, addScriptHook, arg.Name, arg.Script)
 	return err
 }
 
@@ -41,7 +71,7 @@ func (q *Queries) attachHook(ctx context.Context, arg attachHookParams) error {
 }
 
 const getAttachedHooks = `-- name: getAttachedHooks :many
-SELECT h.name, h.script
+SELECT h.name, h.script, h.is_file, h.filepath
 FROM key_hooks kh
 JOIN hooks h ON kh.hook = h.name
 WHERE kh.key = ?
@@ -56,7 +86,12 @@ func (q *Queries) getAttachedHooks(ctx context.Context, key string) ([]Hook, err
 	var items []Hook
 	for rows.Next() {
 		var i Hook
-		if err := rows.Scan(&i.Name, &i.Script); err != nil {
+		if err := rows.Scan(
+			&i.Name,
+			&i.Script,
+			&i.IsFile,
+			&i.Filepath,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -87,7 +122,7 @@ const hookExists = `-- name: hookExists :one
 SELECT EXISTS(
     SELECT 1
     FROM hooks
-    WHERE "name"=?
+    WHERE name=?
 )
 `
 
@@ -114,7 +149,7 @@ func (q *Queries) keyExists(ctx context.Context, key string) (int64, error) {
 }
 
 const listHooks = `-- name: listHooks :many
-SELECT "name" FROM hooks
+SELECT name FROM hooks
 `
 
 func (q *Queries) listHooks(ctx context.Context) ([]string, error) {
