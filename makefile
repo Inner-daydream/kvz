@@ -5,6 +5,8 @@ BINARY_NAME :=kvz
 sqlgen:
 	cd internal/sqlite/sql && sqlc generate
 
+dev: build populate
+
 populate:
 	./scripts/populate.sh
 

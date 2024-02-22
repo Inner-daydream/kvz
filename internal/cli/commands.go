@@ -10,8 +10,25 @@ import (
 	"github.com/inner-daydream/kvz/internal/kv"
 )
 
+type Migrator interface {
+	Migrate() error
+}
+
 type BaseKvCmd struct {
 	s kv.KvService
+}
+
+type UpgradeCmd struct {
+	m Migrator
+}
+
+func (c *UpgradeCmd) Run() error {
+	err := c.m.Migrate()
+	if err != nil {
+		return fmt.Errorf("upgrade failed: %w", err)
+	}
+	fmt.Printf("upgrade completed successfuly\n")
+	return nil
 }
 
 type SetCmd struct {
@@ -73,8 +90,9 @@ type HookSubCmd struct {
 }
 
 type Cli struct {
-	Kv   KvSubCmd   `cmd:""`
-	Hook HookSubCmd `cmd:""`
+	Kv      KvSubCmd   `cmd:""`
+	Hook    HookSubCmd `cmd:""`
+	Upgrade UpgradeCmd `cmd:"" help:"Upgrade the store schema to the latest version to support new features"`
 }
 
 func (c *SetCmd) Run() error {
@@ -181,7 +199,7 @@ func (c *RmKeyCmd) Run() error {
 	return c.s.Delete(c.Key)
 }
 
-func NewCli(kvService kv.KvService) *Cli {
+func NewCli(kvService kv.KvService, migrator Migrator) *Cli {
 	baseKvCmd := BaseKvCmd{
 		s: kvService,
 	}
@@ -213,6 +231,9 @@ func NewCli(kvService kv.KvService) *Cli {
 			Rm: RmHookCmd{
 				BaseKvCmd: &baseKvCmd,
 			},
+		},
+		Upgrade: UpgradeCmd{
+			m: migrator,
 		},
 	}
 }

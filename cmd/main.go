@@ -18,13 +18,13 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	sqlite.Migrate(db)
 	queries := sqlite.New(db)
 	repo := sqlite.NewRepository(queries)
 	var service kv.KvService = kv.NewServcice(repo)
 	if err != nil {
 		log.Fatal(err)
 	}
-	cliCommands := cli.NewCli(service)
+	migrator := sqlite.NewSqliteMigrator(db)
+	cliCommands := cli.NewCli(service, migrator)
 	cli.ParseAndExecute(cliCommands)
 }

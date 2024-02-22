@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+./kvz upgrade
 ./kvz kv set bg-color blue
 ./kvz hook add bg-update-file-path --link ./scripts/hookTest.sh
 ./kvz hook add bg-update-saved-file --file ./scripts/hookTest.sh

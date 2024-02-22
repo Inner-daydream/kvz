@@ -58,7 +58,8 @@ func Test_kvService_Set(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	sqlite.Migrate(db)
+	migrator := sqlite.NewSqliteMigrator(db)
+	err = migrator.Migrate()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +85,8 @@ func Test_kvService_Get(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = sqlite.Migrate(db)
+	migrator := sqlite.NewSqliteMigrator(db)
+	err = migrator.Migrate()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +156,8 @@ func Test_kvService_ListKeys(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = sqlite.Migrate(db)
+	migrator := sqlite.NewSqliteMigrator(db)
+	err = migrator.Migrate()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,7 +206,8 @@ func Test_kvService_ListHooks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = sqlite.Migrate(db)
+	migrator := sqlite.NewSqliteMigrator(db)
+	err = migrator.Migrate()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +256,8 @@ func Test_kvService_AttachHook(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = sqlite.Migrate(db)
+	migrator := sqlite.NewSqliteMigrator(db)
+	err = migrator.Migrate()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -322,7 +327,8 @@ func Test_kvService_GetAttachedHooks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = sqlite.Migrate(db)
+	migrator := sqlite.NewSqliteMigrator(db)
+	err = migrator.Migrate()
 	if err != nil {
 		t.Fatal(err)
 	}

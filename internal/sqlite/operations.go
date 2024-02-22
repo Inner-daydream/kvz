@@ -22,12 +22,22 @@ func OpenDB(path string) (*sql.DB, error) {
 var embedMigrations embed.FS
 
 // update the db to the latest sql schema
-func Migrate(db *sql.DB) error {
+func (m *SqliteMigrator) Migrate() error {
 	goose.SetLogger(goose.NopLogger())
 	goose.SetDialect("sqlite3")
 	goose.SetBaseFS(embedMigrations)
-	if err := goose.Up(db, "sql/migrations"); err != nil {
+	if err := goose.Up(m.db, "sql/migrations"); err != nil {
 		return fmt.Errorf("migrations failed: %w", err)
 	}
 	return nil
+}
+
+type SqliteMigrator struct {
+	db *sql.DB
+}
+
+func NewSqliteMigrator(db *sql.DB) *SqliteMigrator {
+	return &SqliteMigrator{
+		db: db,
+	}
 }
