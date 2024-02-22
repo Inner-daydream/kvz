@@ -3,6 +3,7 @@ package kv
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,6 +12,7 @@ import (
 type KvService interface {
 	Set(key string, val string) (err error)
 	Get(key string) (val string, err error)
+	Delete(key string) error
 	AttachHook(key string, hook string) error
 	ListKeys() ([]string, error)
 	ListHooks() ([]string, error)
@@ -19,10 +21,12 @@ type KvService interface {
 	AddFileHook(name string, content string) error
 	AddScriptHook(key string, hook string) error
 	ExecHooks(hooks []Hook, newVal string) ([]CmdOutput, error)
+	DeleteHook(name string) error
 }
 type KvRepository interface {
 	GetVal(ctx context.Context, key string) (val string, err error)
 	SetVal(ctx context.Context, key string, val string) error
+	DeleteKey(ctx context.Context, key string) error
 	AddScriptHook(ctx context.Context, name string, script string) error
 	AddFilePathHook(ctx context.Context, name string, filepath string) error
 	AddFileHook(ctx context.Context, name string, content string) error
@@ -32,6 +36,7 @@ type KvRepository interface {
 	GetAttachedHooks(ctx context.Context, key string) ([]Hook, error)
 	KeyExists(ctx context.Context, key string) (bool, error)
 	HookExists(ctx context.Context, name string) (bool, error)
+	DeleteHook(ctx context.Context, name string) error
 }
 
 type Hook struct {
@@ -68,6 +73,26 @@ func (s *kvService) Get(key string) (val string, err error) {
 		return "", fmt.Errorf("failed to get the value from the %s key: %w", key, err)
 	}
 	return val, nil
+}
+
+func (s *kvService) Delete(key string) error {
+	if key == "" {
+		return errors.New("must specify key")
+	}
+	ctx := context.Background()
+	keyExists, err := s.r.KeyExists(ctx, key)
+	if err != nil {
+		return fmt.Errorf("could not check if key exists: %w", err)
+	}
+	if !keyExists {
+		return fmt.Errorf("specified key: '%s' does not exist", key)
+	}
+	ctx = context.Background()
+	err = s.r.DeleteKey(ctx, key)
+	if err != nil {
+		return fmt.Errorf("failed to delete key: %w", err)
+	}
+	return nil
 }
 
 func (s *kvService) AddScriptHook(name string, script string) error {
@@ -138,6 +163,26 @@ func (s *kvService) AttachHook(key string, hook string) error {
 	err = s.r.AttachHook(ctx, key, hook)
 	if err != nil {
 		return fmt.Errorf("failed to attach the %s hook to the %s key: %w", hook, key, err)
+	}
+	return nil
+}
+
+func (s *kvService) DeleteHook(name string) error {
+	if name == "" {
+		return errors.New("must specify hook name")
+	}
+	ctx := context.Background()
+	hookExists, err := s.r.HookExists(ctx, name)
+	if err != nil {
+		return fmt.Errorf("could not check if hook exists: %w", err)
+	}
+	if !hookExists {
+		return fmt.Errorf("specified hook: '%s' does not exist", name)
+	}
+	ctx = context.Background()
+	err = s.r.DeleteHook(ctx, name)
+	if err != nil {
+		return fmt.Errorf("failed to delete hook: %w", err)
 	}
 	return nil
 }

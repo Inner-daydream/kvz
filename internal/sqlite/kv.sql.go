@@ -11,7 +11,7 @@ import (
 )
 
 const addFileHook = `-- name: addFileHook :exec
-INSERT INTO hooks (name, script, is_file)
+INSERT OR REPLACE INTO hooks (name, script, is_file)
 VALUES (?, ?, TRUE)
 `
 
@@ -26,7 +26,7 @@ func (q *Queries) addFileHook(ctx context.Context, arg addFileHookParams) error 
 }
 
 const addFilePathHook = `-- name: addFilePathHook :exec
-INSERT INTO hooks (name, filepath, is_file)
+INSERT OR REPLACE INTO hooks (name, filepath, is_file)
 VALUES (?, ?, TRUE)
 `
 
@@ -41,7 +41,7 @@ func (q *Queries) addFilePathHook(ctx context.Context, arg addFilePathHookParams
 }
 
 const addScriptHook = `-- name: addScriptHook :exec
-INSERT INTO hooks (name, script, is_file)
+INSERT OR REPLACE INTO hooks (name, script, is_file)
 VALUES (?, ?, FALSE)
 `
 
@@ -67,6 +67,26 @@ type attachHookParams struct {
 
 func (q *Queries) attachHook(ctx context.Context, arg attachHookParams) error {
 	_, err := q.db.ExecContext(ctx, attachHook, arg.Key, arg.Hook)
+	return err
+}
+
+const deleteHook = `-- name: deleteHook :exec
+DELETE FROM hooks
+where name = ?
+`
+
+func (q *Queries) deleteHook(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteHook, name)
+	return err
+}
+
+const deleteKey = `-- name: deleteKey :exec
+DELETE FROM kv
+WHERE "key" = ?
+`
+
+func (q *Queries) deleteKey(ctx context.Context, key string) error {
+	_, err := q.db.ExecContext(ctx, deleteKey, key)
 	return err
 }
 

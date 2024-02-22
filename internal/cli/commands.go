@@ -45,19 +45,31 @@ type LsKeysCmd struct {
 	*BaseKvCmd
 }
 
+type RmKeyCmd struct {
+	*BaseKvCmd
+	Key string `arg:""`
+}
+
 type LsHooksCmd struct {
 	*BaseKvCmd
+}
+
+type RmHookCmd struct {
+	*BaseKvCmd
+	Name string `arg:""`
 }
 
 type KvSubCmd struct {
 	Set SetCmd    `cmd:"" help:"Set a kv pair"`
 	Get GetCmd    `cmd:"" help:"Get the value of a key"`
 	Ls  LsKeysCmd `cmd:"" help:"List the keys"`
+	Rm  RmKeyCmd  `cmd:"" help:"Remove a key"`
 }
 type HookSubCmd struct {
 	Add    AddHookCmd    `cmd:"" help:"create a hook, when attached to a key, the provided script will run whenever the value of the key is changed"`
 	Attach AttachHookCmd `cmd:"" help:"attach a hook to a key, it will run whenever the value of the key is changed"`
 	Ls     LsHooksCmd    `cmd:"" help:"List the hook names"`
+	Rm     RmHookCmd     `cmd:"" help:"Remove a hook"`
 }
 
 type Cli struct {
@@ -161,6 +173,14 @@ func (c *LsHooksCmd) Run() error {
 	return nil
 }
 
+func (c *RmHookCmd) Run() error {
+	return c.s.DeleteHook(c.Name)
+}
+
+func (c *RmKeyCmd) Run() error {
+	return c.s.Delete(c.Key)
+}
+
 func NewCli(kvService kv.KvService) *Cli {
 	baseKvCmd := BaseKvCmd{
 		s: kvService,
@@ -176,6 +196,9 @@ func NewCli(kvService kv.KvService) *Cli {
 			Ls: LsKeysCmd{
 				BaseKvCmd: &baseKvCmd,
 			},
+			Rm: RmKeyCmd{
+				BaseKvCmd: &baseKvCmd,
+			},
 		},
 		Hook: HookSubCmd{
 			Add: AddHookCmd{
@@ -185,6 +208,9 @@ func NewCli(kvService kv.KvService) *Cli {
 				BaseKvCmd: &baseKvCmd,
 			},
 			Ls: LsHooksCmd{
+				BaseKvCmd: &baseKvCmd,
+			},
+			Rm: RmHookCmd{
 				BaseKvCmd: &baseKvCmd,
 			},
 		},

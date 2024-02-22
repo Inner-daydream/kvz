@@ -11,7 +11,14 @@ type KvRepositoryAdapter struct {
 	q Querier
 }
 
-// AddFileHook implements kv.KvRepository.
+func (r *KvRepositoryAdapter) DeleteHook(ctx context.Context, name string) error {
+	return r.q.deleteHook(ctx, name)
+}
+
+func (r *KvRepositoryAdapter) DeleteKey(ctx context.Context, key string) error {
+	return r.q.deleteKey(ctx, key)
+}
+
 func (r *KvRepositoryAdapter) AddFileHook(ctx context.Context, name string, content string) error {
 	params := addFileHookParams{
 		Name: name,

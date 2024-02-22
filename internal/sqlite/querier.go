@@ -13,6 +13,8 @@ type Querier interface {
 	addFilePathHook(ctx context.Context, arg addFilePathHookParams) error
 	addScriptHook(ctx context.Context, arg addScriptHookParams) error
 	attachHook(ctx context.Context, arg attachHookParams) error
+	deleteHook(ctx context.Context, name string) error
+	deleteKey(ctx context.Context, key string) error
 	getAttachedHooks(ctx context.Context, key string) ([]Hook, error)
 	getVal(ctx context.Context, key string) (string, error)
 	hookExists(ctx context.Context, name string) (int64, error)

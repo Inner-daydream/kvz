@@ -7,26 +7,32 @@ WHERE "key" = ?;
 INSERT OR REPLACE INTO kv ("key", val)
 VALUES (?, ?);
 
+-- name: deleteKey :exec
+DELETE FROM kv
+WHERE "key" = ?;
+
 -- name: listKeys :many
 SELECT "key" FROM kv;
 
 -- name: addScriptHook :exec
-INSERT INTO hooks (name, script, is_file)
+INSERT OR REPLACE INTO hooks (name, script, is_file)
 VALUES (?, ?, FALSE);
 
 -- name: addFilePathHook :exec 
-INSERT INTO hooks (name, filepath, is_file)
+INSERT OR REPLACE INTO hooks (name, filepath, is_file)
 VALUES (?, ?, TRUE);
 
 -- name: addFileHook :exec
-INSERT INTO hooks (name, script, is_file)
+INSERT OR REPLACE INTO hooks (name, script, is_file)
 VALUES (?, ?, TRUE);
 
 -- name: attachHook :exec
 INSERT INTO key_hooks ("key", hook)
 VALUES (?, ?);
 
-
+-- name: deleteHook :exec
+DELETE FROM hooks
+where name = ?;
 
 -- name: listHooks :many
 SELECT name FROM hooks;
