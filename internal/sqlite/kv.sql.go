@@ -10,51 +10,6 @@ import (
 	"database/sql"
 )
 
-const addFileHook = `-- name: addFileHook :exec
-INSERT OR REPLACE INTO hooks (name, script, is_file)
-VALUES (?, ?, TRUE)
-`
-
-type addFileHookParams struct {
-	Name   string
-	Script sql.NullString
-}
-
-func (q *Queries) addFileHook(ctx context.Context, arg addFileHookParams) error {
-	_, err := q.db.ExecContext(ctx, addFileHook, arg.Name, arg.Script)
-	return err
-}
-
-const addFilePathHook = `-- name: addFilePathHook :exec
-INSERT OR REPLACE INTO hooks (name, filepath, is_file)
-VALUES (?, ?, TRUE)
-`
-
-type addFilePathHookParams struct {
-	Name     string
-	Filepath sql.NullString
-}
-
-func (q *Queries) addFilePathHook(ctx context.Context, arg addFilePathHookParams) error {
-	_, err := q.db.ExecContext(ctx, addFilePathHook, arg.Name, arg.Filepath)
-	return err
-}
-
-const addScriptHook = `-- name: addScriptHook :exec
-INSERT OR REPLACE INTO hooks (name, script, is_file)
-VALUES (?, ?, FALSE)
-`
-
-type addScriptHookParams struct {
-	Name   string
-	Script sql.NullString
-}
-
-func (q *Queries) addScriptHook(ctx context.Context, arg addScriptHookParams) error {
-	_, err := q.db.ExecContext(ctx, addScriptHook, arg.Name, arg.Script)
-	return err
-}
-
 const attachHook = `-- name: attachHook :exec
 INSERT INTO key_hooks ("key", hook)
 VALUES (?, ?)
@@ -220,6 +175,51 @@ func (q *Queries) listKeys(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const setFileHook = `-- name: setFileHook :exec
+INSERT OR REPLACE INTO hooks (name, script, is_file)
+VALUES (?, ?, TRUE)
+`
+
+type setFileHookParams struct {
+	Name   string
+	Script sql.NullString
+}
+
+func (q *Queries) setFileHook(ctx context.Context, arg setFileHookParams) error {
+	_, err := q.db.ExecContext(ctx, setFileHook, arg.Name, arg.Script)
+	return err
+}
+
+const setFilePathHook = `-- name: setFilePathHook :exec
+INSERT OR REPLACE INTO hooks (name, filepath, is_file)
+VALUES (?, ?, TRUE)
+`
+
+type setFilePathHookParams struct {
+	Name     string
+	Filepath sql.NullString
+}
+
+func (q *Queries) setFilePathHook(ctx context.Context, arg setFilePathHookParams) error {
+	_, err := q.db.ExecContext(ctx, setFilePathHook, arg.Name, arg.Filepath)
+	return err
+}
+
+const setScriptHook = `-- name: setScriptHook :exec
+INSERT OR REPLACE INTO hooks (name, script, is_file)
+VALUES (?, ?, FALSE)
+`
+
+type setScriptHookParams struct {
+	Name   string
+	Script sql.NullString
+}
+
+func (q *Queries) setScriptHook(ctx context.Context, arg setScriptHookParams) error {
+	_, err := q.db.ExecContext(ctx, setScriptHook, arg.Name, arg.Script)
+	return err
 }
 
 const setVal = `-- name: setVal :exec

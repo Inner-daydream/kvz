@@ -19,38 +19,37 @@ func (r *KvRepositoryAdapter) DeleteKey(ctx context.Context, key string) error {
 	return r.q.deleteKey(ctx, key)
 }
 
-func (r *KvRepositoryAdapter) AddFileHook(ctx context.Context, name string, content string) error {
-	params := addFileHookParams{
+func (r *KvRepositoryAdapter) SetFileHook(ctx context.Context, name string, content string) error {
+	params := setFileHookParams{
 		Name: name,
 		Script: sql.NullString{
 			Valid:  true,
 			String: content,
 		},
 	}
-	return r.q.addFileHook(ctx, params)
+	return r.q.setFileHook(ctx, params)
 }
 
-// AddFilePathHook implements kv.KvRepository.
-func (r *KvRepositoryAdapter) AddFilePathHook(ctx context.Context, name string, filepath string) error {
-	params := addFilePathHookParams{
+func (r *KvRepositoryAdapter) SetFilePathHook(ctx context.Context, name string, filepath string) error {
+	params := setFilePathHookParams{
 		Name: name,
 		Filepath: sql.NullString{
 			Valid:  true,
 			String: filepath,
 		},
 	}
-	return r.q.addFilePathHook(ctx, params)
+	return r.q.setFilePathHook(ctx, params)
 }
 
-func (r *KvRepositoryAdapter) AddScriptHook(ctx context.Context, name string, script string) error {
-	params := addScriptHookParams{
+func (r *KvRepositoryAdapter) SetScriptHook(ctx context.Context, name string, script string) error {
+	params := setScriptHookParams{
 		Name: name,
 		Script: sql.NullString{
 			Valid:  true,
 			String: script,
 		},
 	}
-	return r.q.addScriptHook(ctx, params)
+	return r.q.setScriptHook(ctx, params)
 }
 
 func (r *KvRepositoryAdapter) AttachHook(ctx context.Context, key string, hook string) error {

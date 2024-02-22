@@ -9,9 +9,6 @@ import (
 )
 
 type Querier interface {
-	addFileHook(ctx context.Context, arg addFileHookParams) error
-	addFilePathHook(ctx context.Context, arg addFilePathHookParams) error
-	addScriptHook(ctx context.Context, arg addScriptHookParams) error
 	attachHook(ctx context.Context, arg attachHookParams) error
 	deleteHook(ctx context.Context, name string) error
 	deleteKey(ctx context.Context, key string) error
@@ -21,6 +18,9 @@ type Querier interface {
 	keyExists(ctx context.Context, key string) (int64, error)
 	listHooks(ctx context.Context) ([]string, error)
 	listKeys(ctx context.Context) ([]string, error)
+	setFileHook(ctx context.Context, arg setFileHookParams) error
+	setFilePathHook(ctx context.Context, arg setFilePathHookParams) error
+	setScriptHook(ctx context.Context, arg setScriptHookParams) error
 	setVal(ctx context.Context, arg setValParams) error
 }
 

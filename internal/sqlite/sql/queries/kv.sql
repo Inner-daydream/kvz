@@ -14,15 +14,15 @@ WHERE "key" = ?;
 -- name: listKeys :many
 SELECT "key" FROM kv;
 
--- name: addScriptHook :exec
+-- name: setScriptHook :exec
 INSERT OR REPLACE INTO hooks (name, script, is_file)
 VALUES (?, ?, FALSE);
 
--- name: addFilePathHook :exec 
+-- name: setFilePathHook :exec 
 INSERT OR REPLACE INTO hooks (name, filepath, is_file)
 VALUES (?, ?, TRUE);
 
--- name: addFileHook :exec
+-- name: setFileHook :exec
 INSERT OR REPLACE INTO hooks (name, script, is_file)
 VALUES (?, ?, TRUE);
 

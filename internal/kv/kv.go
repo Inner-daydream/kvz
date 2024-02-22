@@ -17,9 +17,9 @@ type KvService interface {
 	ListKeys() ([]string, error)
 	ListHooks() ([]string, error)
 	GetAttachedHooks(key string) ([]Hook, error)
-	AddFilePathHook(name string, filepath string) error
-	AddFileHook(name string, content string) error
-	AddScriptHook(key string, hook string) error
+	SetFilePathHook(name string, filepath string) error
+	SetFileHook(name string, content string) error
+	SetScriptHook(key string, hook string) error
 	ExecHooks(hooks []Hook, newVal string) ([]CmdOutput, error)
 	DeleteHook(name string) error
 }
@@ -27,9 +27,9 @@ type KvRepository interface {
 	GetVal(ctx context.Context, key string) (val string, err error)
 	SetVal(ctx context.Context, key string, val string) error
 	DeleteKey(ctx context.Context, key string) error
-	AddScriptHook(ctx context.Context, name string, script string) error
-	AddFilePathHook(ctx context.Context, name string, filepath string) error
-	AddFileHook(ctx context.Context, name string, content string) error
+	SetScriptHook(ctx context.Context, name string, script string) error
+	SetFilePathHook(ctx context.Context, name string, filepath string) error
+	SetFileHook(ctx context.Context, name string, content string) error
 	AttachHook(ctx context.Context, key string, hook string) error
 	ListKeys(ctx context.Context) ([]string, error)
 	ListHooks(ctx context.Context) ([]string, error)
@@ -95,45 +95,36 @@ func (s *kvService) Delete(key string) error {
 	return nil
 }
 
-func (s *kvService) AddScriptHook(name string, script string) error {
+func (s *kvService) SetScriptHook(name string, script string) error {
 	if name == "" || script == "" {
 		return fmt.Errorf("key or hook name may not be empty")
 	}
 	ctx := context.Background()
-	hookExists, err := s.r.HookExists(ctx, name)
-	if err != nil {
-		return fmt.Errorf("could not check if the hook name is unique: %w", err)
-	}
-	if hookExists {
-		return fmt.Errorf("hook name has to be unique")
-	}
-
-	ctx = context.Background()
-	err = s.r.AddScriptHook(ctx, name, script)
+	err := s.r.SetScriptHook(ctx, name, script)
 	if err != nil {
 		return fmt.Errorf("failed to create the hook: %w", err)
 	}
 	return nil
 }
 
-func (s *kvService) AddFileHook(name string, content string) error {
+func (s *kvService) SetFileHook(name string, content string) error {
 	if name == "" || content == "" {
 		return fmt.Errorf("name or content may not be empty")
 	}
 	ctx := context.Background()
-	err := s.r.AddFileHook(ctx, name, content)
+	err := s.r.SetFileHook(ctx, name, content)
 	if err != nil {
 		return fmt.Errorf("unable to save the content of the file: %w", err)
 	}
 	return nil
 }
 
-func (s *kvService) AddFilePathHook(name string, filepath string) error {
+func (s *kvService) SetFilePathHook(name string, filepath string) error {
 	if name == "" || filepath == "" {
 		return fmt.Errorf("name or filepath may not be empty")
 	}
 	ctx := context.Background()
-	err := s.r.AddFilePathHook(ctx, name, filepath)
+	err := s.r.SetFilePathHook(ctx, name, filepath)
 	if err != nil {
 		return fmt.Errorf("unable to create the hook: %w", err)
 	}

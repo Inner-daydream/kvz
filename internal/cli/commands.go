@@ -44,7 +44,7 @@ type GetCmd struct {
 	Key string `arg:""`
 }
 
-type AddHookCmd struct {
+type SetHookCmd struct {
 	*BaseKvCmd
 	Name   string `arg:""`
 	Script string `arg:""`
@@ -83,7 +83,7 @@ type KvSubCmd struct {
 	Rm  RmKeyCmd  `cmd:"" help:"Remove a key"`
 }
 type HookSubCmd struct {
-	Add    AddHookCmd    `cmd:"" help:"create a hook, when attached to a key, the provided script will run whenever the value of the key is changed"`
+	Set    SetHookCmd    `cmd:"" help:"create a hook, when attached to a key, the provided script will run whenever the value of the key is changed"`
 	Attach AttachHookCmd `cmd:"" help:"attach a hook to a key, it will run whenever the value of the key is changed"`
 	Ls     LsHooksCmd    `cmd:"" help:"List the hook names"`
 	Rm     RmHookCmd     `cmd:"" help:"Remove a hook"`
@@ -143,9 +143,9 @@ func (c *GetCmd) Run() error {
 	return nil
 }
 
-func (c *AddHookCmd) Run() error {
+func (c *SetHookCmd) Run() error {
 	if !c.File && !c.Link {
-		return c.s.AddScriptHook(c.Name, c.Script)
+		return c.s.SetScriptHook(c.Name, c.Script)
 	}
 	_, err := os.Stat(c.Script)
 	if errors.Is(err, os.ErrNotExist) {
@@ -156,13 +156,13 @@ func (c *AddHookCmd) Run() error {
 		return fmt.Errorf("could not determine full path of the script")
 	}
 	if c.Link {
-		return c.s.AddFilePathHook(c.Name, filePath)
+		return c.s.SetFilePathHook(c.Name, filePath)
 	}
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("could not read the script: %w", err)
 	}
-	return c.s.AddFileHook(c.Name, string(content))
+	return c.s.SetFileHook(c.Name, string(content))
 }
 
 func (c *AttachHookCmd) Run() error {
@@ -219,7 +219,7 @@ func NewCli(kvService kv.KvService, migrator Migrator) *Cli {
 			},
 		},
 		Hook: HookSubCmd{
-			Add: AddHookCmd{
+			Set: SetHookCmd{
 				BaseKvCmd: &baseKvCmd,
 			},
 			Attach: AttachHookCmd{
