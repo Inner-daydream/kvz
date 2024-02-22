@@ -122,14 +122,12 @@ func (c *SetCmd) Run() error {
 			} else {
 				fmt.Printf("Hook %s success.\nResult:\n%s", cmd.Caller, cmd.Stdout)
 			}
+		} else if c.ShowHooks {
+			fmt.Printf(cmd.Stdout)
 		}
 		if cmd.Error != nil {
 			fmt.Printf("%s\n%s", cmd.Error, cmd.Stderr)
 		}
-		if c.ShowHooks {
-			fmt.Printf(cmd.Stdout)
-		}
-
 	}
 	return nil
 }
