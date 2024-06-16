@@ -1,4 +1,6 @@
 *.db
 kvz
+kvz-template
+templates
 .DS_Store
 .vscode
